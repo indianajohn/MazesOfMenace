@@ -1,0 +1,11 @@
+{
+    "id" : "MazesOfMenace",
+    "version" : "0.1.1-SNAPSHOT",
+    "author" : "indianajohn",
+    "displayName" : "Mazes Of Menace",
+    "description" : "",
+    "dependencies" :
+    [
+        {"id": "CustomOreGen", "minVersion": "0.1.0"}
+    ]
+}
