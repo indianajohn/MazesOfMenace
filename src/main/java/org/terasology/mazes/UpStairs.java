@@ -18,14 +18,17 @@ package org.terasology.mazes;
 import org.terasology.math.geom.Vector3i;
 
 /**
- * Created by john on 10/18/15.
+ * Created by john on 10/19/15.
  */
-public class AirTile extends MazeTile {
-    public AirTile(MazeInfo maze_info_input) {
+public class UpStairs extends MazeTile {
+    public UpStairs(MazeInfo maze_info_input) {
         super(maze_info_input);
     }
     public boolean containsRelativePosition(Vector3i position)
     {
+        // For the moment, this is the exact same logic as an air tile. Later, we will make it so that
+        // actual stairs are created.
+        // TODO: make stairs
         // This extrudes everything except for the floor between this and the next level.
         return (position.y() <= maze_info.room_height);
     }

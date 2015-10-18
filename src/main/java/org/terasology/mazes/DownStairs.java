@@ -20,13 +20,14 @@ import org.terasology.math.geom.Vector3i;
 /**
  * Created by john on 10/18/15.
  */
-public class AirTile extends MazeTile {
-    public AirTile(MazeInfo maze_info_input) {
+public class DownStairs extends MazeTile {
+    public DownStairs(MazeInfo maze_info_input) {
         super(maze_info_input);
     }
     public boolean containsRelativePosition(Vector3i position)
     {
-        // This extrudes everything except for the floor between this and the next level.
-        return (position.y() <= maze_info.room_height);
+        // Extrudes the whole tile, including the floor.
+        // TODO: actually make this like a staircase
+        return true;
     }
 }

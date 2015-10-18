@@ -25,6 +25,6 @@ public abstract class MazeTile {
     {
         maze_info = maze_info_input;
     }
-    private MazeInfo maze_info;
+    protected MazeInfo maze_info;
     public abstract boolean containsRelativePosition(Vector3i relative_position);
 }

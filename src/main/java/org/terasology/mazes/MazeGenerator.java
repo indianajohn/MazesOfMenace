@@ -33,17 +33,6 @@ public class MazeGenerator {
     }
     public boolean containsWorldPosition(Vector3i position)
     {
-        // Catch the tunnel leading down
-        if (position.x() >= m_maze_info.entrance.x() &&
-                position.x() < m_maze_info.entrance.x() + m_maze_info.room_diameter &&
-                position.z() >= m_maze_info.entrance.z() &&
-                position.z() < m_maze_info.entrance.z() + m_maze_info.room_diameter &&
-                position.y() > m_maze_info.minTileY()
-                )
-        {
-            return true;
-        }
-        //return m_maze_info.isInsideBoundaries(position);
         Vector3i room_id = m_maze_info.getRoomID(position);
         Vector3i relative_position = m_maze_info.getPositionInRoom(position);
         return (room_id != null &&

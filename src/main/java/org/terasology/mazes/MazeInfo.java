@@ -69,7 +69,8 @@ public class MazeInfo {
                 }
             }
             // Dig out a room
-            maze_map.put(new Vector3i(focus),new AirTile(this));
+            if (!maze_map.containsKey(focus))
+                maze_map.put(new Vector3i(focus),new AirTile(this));
         }
     }
 
@@ -78,19 +79,37 @@ public class MazeInfo {
         maze_map = new HashMap<>();
         Random random_generator = new Random(seed);
 
-        // Generate room next to stairs
-        int generate_width = 2 + random_generator.nextInt(2);
-        int generate_height = 2 + random_generator.nextInt(2);
-        generateRoom(new Vector3i(0,0,0),generate_width,generate_height);
+        // Generate a staircase down as far as possible.
+        for (int nFloor = 0; nFloor > -20; nFloor--)
+        {
+            maze_map.put(new Vector3i(0,nFloor,0),new DownStairs(this));
+        }
 
         // Generate 5 random vectors that will serve as "room centers" per floor.
         int nRoomCount = 5 + random_generator.nextInt(3);
+        Vector3i vectorLastFloorStairs = null;
         for (int nFloor = 0; nFloor < maze_depth; nFloor++) {
             Vector3i vecLastRoomCenter = null;
+            Vector3i room_center = null;
             for (int nRoom = 0; nRoom < nRoomCount; nRoom++) {
-                Vector3i room_center = new Vector3i(random_generator.nextInt(maze_width), nFloor, random_generator.nextInt(maze_height));
-                generate_width = 2 + random_generator.nextInt(3);
-                generate_height = 2 + random_generator.nextInt(3);
+                if (nRoom == 0) {
+                    if (vectorLastFloorStairs == null) {
+                        // The first floor, so our first room is at 0,0,0
+                        room_center = new Vector3i(0, 0, 0);
+                    }
+                    else
+                    {
+                        room_center = new Vector3i(vectorLastFloorStairs.x(),nFloor,vectorLastFloorStairs.z());
+                    }
+                    maze_map.put(new Vector3i(room_center),new UpStairs(this));
+                }
+                else
+                {
+                    // Make a random room
+                    room_center = new Vector3i(random_generator.nextInt(maze_width), nFloor, random_generator.nextInt(maze_height));
+                }
+                int generate_width = 2 + random_generator.nextInt(3);
+                int generate_height = 2 + random_generator.nextInt(3);
                 generateRoom(room_center,generate_width,generate_height);
                 if (vecLastRoomCenter == null)
                 {
@@ -103,24 +122,9 @@ public class MazeInfo {
                     vecLastRoomCenter = room_center;
                 }
             }
+            vectorLastFloorStairs = new Vector3i(room_center);
+            maze_map.put(new Vector3i(room_center),new DownStairs(this));
         }
-
-        // Fill the rest of the maze with solid tiles
-        for (int nFloor = 0; nFloor < maze_depth; nFloor++)
-        {
-            for (int nX = 0; nX < maze_width; nX++)
-            {
-                for (int nZ = 0; nZ < maze_height; nZ++)
-                {
-                    Vector3i focus_tile = new Vector3i(nX,nFloor,nZ);
-                    if (!maze_map.containsKey(focus_tile))
-                    {
-                        maze_map.put(focus_tile,new SolidTile(this));
-                    }
-                }
-            }
-        }
-
     }
 
     public HashMap<Vector3i,MazeTile> maze_map;
@@ -170,6 +174,16 @@ public class MazeInfo {
     }
     public boolean isInsideBoundaries(Vector3i position)
     {
+        // Catch the tunnel leading down
+        if (position.x() >= entrance.x() &&
+                position.x() < entrance.x() + room_diameter &&
+                position.z() >= entrance.z() &&
+                position.z() < entrance.z() + room_diameter &&
+                position.y() > minTileY()
+                )
+        {
+            return true;
+        }
         return (position.x() > minTileX() &&
                 position.y() > minTileY() &&
                 position.z() > minTileZ() &&
@@ -188,10 +202,7 @@ public class MazeInfo {
         int y = - (position.y() - entrance.y())/(room_height+floor_thickness);
         int y_remainder = - (position.y() - entrance.y()) % (room_height+floor_thickness);
         int z = (position.z() - entrance.z())/room_diameter;
-        if (y_remainder < room_height)
-            return new Vector3i(x,y,z);
-        else
-            return null;
+        return new Vector3i(x,y,z);
     }
     public Vector3i getPositionInRoom(Vector3i position)
     {
