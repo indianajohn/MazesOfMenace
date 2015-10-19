@@ -17,19 +17,68 @@ package org.terasology.mazes;
 
 import org.terasology.math.geom.Vector3i;
 
+import java.util.HashMap;
+
 /**
  * Created by john on 10/19/15.
  */
 public class UpStairs extends MazeTile {
     public UpStairs(MazeInfo maze_info_input) {
         super(maze_info_input);
+        // TODO: make it so this code is only executed once and other stairs are copies.
+        // Spiral clockwise from the lower right hand corner, going down one block per level
+        Vector3i focus = new Vector3i(0,0,0);
+        room_blocks.put(new Vector3i(focus), false);
+        Vector3i direction = Vector3i.west();
+        while (focus.y() < maze_info.room_height + maze_info.floor_thickness) {
+            focus.add(direction);
+            if (!insideRoom(focus)) {
+                focus.sub(direction);
+                Vector3i new_direction = null;
+                if (direction.distance(Vector3i.west()) == 0)
+                    new_direction = Vector3i.north();
+                else if (direction.distance(Vector3i.north()) == 0)
+                    new_direction = Vector3i.east();
+                else if (direction.distance(Vector3i.east()) == 0)
+                    new_direction = Vector3i.south();
+                else if (direction.distance(Vector3i.south()) == 0)
+                    new_direction = Vector3i.west();
+                else
+                    throw new RuntimeException("what?: " + direction.toString());
+                direction = new_direction;
+                focus.add(direction);
+            }
+            focus.addY(1);
+            room_blocks.put(new Vector3i(focus), false);
+        }
     }
     public boolean containsRelativePosition(Vector3i position)
     {
-        // For the moment, this is the exact same logic as an air tile. Later, we will make it so that
-        // actual stairs are created.
-        // TODO: make stairs
-        // This extrudes everything except for the floor between this and the next level.
-        return (position.y() <= maze_info.room_height);
+        // Everything below the floor is solid
+        if (position.y() > maze_info.room_height)
+            return false;
+
+        // Otherwise, we use a hash map to create and use a stair case block.
+        if (room_blocks.containsKey(position))
+        {
+            return room_blocks.get(position);
+        }
+        else
+        {
+            // Absence from the map indicates an air block
+            return true;
+        }
     }
+    private boolean insideRoom(Vector3i local_position)
+    {
+        return (
+                local_position.x() >= 0 &&
+                        local_position.y() >= 0 &&
+                        local_position.z() >= 0 &&
+                        local_position.x() < maze_info.room_diameter &&
+                        local_position.y() < maze_info.room_height + maze_info.floor_thickness &&
+                        local_position.z() < maze_info.room_diameter
+        );
+    }
+    private HashMap<Vector3i,Boolean> room_blocks = new HashMap<>();
 }

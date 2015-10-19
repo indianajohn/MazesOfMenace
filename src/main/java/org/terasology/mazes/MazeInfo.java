@@ -82,7 +82,7 @@ public class MazeInfo {
         // Generate a staircase down as far as possible.
         for (int nFloor = 0; nFloor > -20; nFloor--)
         {
-            maze_map.put(new Vector3i(0,nFloor,0),new DownStairs(this));
+            maze_map.put(new Vector3i(0,nFloor,0),new UpStairs(this));
         }
 
         // Generate 5 random vectors that will serve as "room centers" per floor.
@@ -207,7 +207,7 @@ public class MazeInfo {
     public Vector3i getPositionInRoom(Vector3i position)
     {
         int x_remainder = (position.x() - entrance.x()) % room_diameter;
-        int y_remainder = - (position.y() - entrance.y()) % (room_height+floor_thickness);
+        int y_remainder = Integer.signum(position.y()) * (position.y() - entrance.y()) % (room_height+floor_thickness);
         int z_remainder = (position.z() - entrance.z()) % room_diameter;
         return new Vector3i(x_remainder,y_remainder,z_remainder);
     }
