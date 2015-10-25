@@ -82,20 +82,27 @@ public class MazeInfo {
         // Generate a staircase down as far as possible.
         for (int nFloor = 0; nFloor > -20; nFloor--)
         {
-            maze_map.put(new Vector3i(0,nFloor,0),new UpStairs(this));
+            //if (nFloor == -3) {
+            if (true) {
+                maze_map.put(new Vector3i(0, nFloor, 0), new ThroughStairs(this, new Vector3i(0, nFloor, 0)));
+            }
+            else
+            {
+                maze_map.put(new Vector3i(0,nFloor,0),new AirTile(this));
+            }
         }
 
         // Generate 5 random vectors that will serve as "room centers" per floor.
         int nRoomCount = 5 + random_generator.nextInt(3);
         Vector3i vectorLastFloorStairs = null;
-        for (int nFloor = 0; nFloor < maze_depth; nFloor++) {
+        for (int nFloor = 1; nFloor < maze_depth; nFloor++) {
             Vector3i vecLastRoomCenter = null;
             Vector3i room_center = null;
             for (int nRoom = 0; nRoom < nRoomCount; nRoom++) {
                 if (nRoom == 0) {
                     if (vectorLastFloorStairs == null) {
                         // The first floor, so our first room is at 0,0,0
-                        room_center = new Vector3i(0, 0, 0);
+                        room_center = new Vector3i(0, nFloor, 0);
                     }
                     else
                     {
@@ -148,7 +155,7 @@ public class MazeInfo {
     public int maze_depth = 5;
 
     // The thickness of the floor/ceiling
-    public int floor_thickness = 5;
+    public int floor_thickness = 4;
 
     // The entrance of the maze. The maze extens northwest from this position.
     public Vector3i entrance = new Vector3i(0,0,5);
@@ -200,14 +207,17 @@ public class MazeInfo {
         int x = (position.x() - entrance.x())/room_diameter;
         // Dungeon level increases as we go down
         int y = - (position.y() - entrance.y())/(room_height+floor_thickness);
-        int y_remainder = - (position.y() - entrance.y()) % (room_height+floor_thickness);
         int z = (position.z() - entrance.z())/room_diameter;
         return new Vector3i(x,y,z);
     }
     public Vector3i getPositionInRoom(Vector3i position)
     {
         int x_remainder = (position.x() - entrance.x()) % room_diameter;
-        int y_remainder = Integer.signum(position.y()) * (position.y() - entrance.y()) % (room_height+floor_thickness);
+        int y_remainder = -(position.y() - entrance.y()) % (room_height+floor_thickness);
+        if (position.y() > entrance.y())
+        {
+            y_remainder = room_height+floor_thickness - (position.y() - entrance.y()) % (room_height+floor_thickness);
+        }
         int z_remainder = (position.z() - entrance.z()) % room_diameter;
         return new Vector3i(x_remainder,y_remainder,z_remainder);
     }

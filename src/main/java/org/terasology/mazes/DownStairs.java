@@ -22,7 +22,7 @@ import java.util.HashMap;
 /**
  * Created by john on 10/18/15.
  */
-public class DownStairs extends MazeTile {
+public class DownStairs extends RoomTemplate {
     public DownStairs(MazeInfo maze_info_input) {
         super(maze_info_input);
         // TODO: make it so this code is only executed once and other stairs are copies.
@@ -31,22 +31,7 @@ public class DownStairs extends MazeTile {
         room_blocks.put(new Vector3i(focus), false);
         Vector3i direction = Vector3i.north();
         while (focus.y() > maze_info.room_height) {
-            focus.add(direction);
-            if (!insideRoom(focus)) {
-                Vector3i new_direction = null;
-                focus.sub(direction);
-                if (direction.distance(Vector3i.north()) == 0)
-                    new_direction = Vector3i.west();
-                else if (direction.distance(Vector3i.west()) == 0)
-                    new_direction = Vector3i.south();
-                else if (direction.distance(Vector3i.south()) == 0)
-                    new_direction = Vector3i.east();
-                else if (direction.distance(Vector3i.east()) == 0)
-                    new_direction = Vector3i.north();
-                direction = new_direction;
-                focus.add(direction);
-            }
-            focus.subY(1);
+            spiralUp(focus,direction);
             room_blocks.put(new Vector3i(focus), false);
         }
     }
@@ -67,16 +52,4 @@ public class DownStairs extends MazeTile {
             return true;
         }
     }
-    private boolean insideRoom(Vector3i local_position)
-    {
-        return (
-                local_position.x() >= 0 &&
-                        local_position.y() >= 0 &&
-                        local_position.z() >= 0 &&
-                        local_position.x() < maze_info.room_diameter &&
-                        local_position.y() < maze_info.room_height + maze_info.floor_thickness &&
-                        local_position.z() < maze_info.room_diameter
-        );
-    }
-    private HashMap<Vector3i,Boolean> room_blocks = new HashMap<>();
 }
