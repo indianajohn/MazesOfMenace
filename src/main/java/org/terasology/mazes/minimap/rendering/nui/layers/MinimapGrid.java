@@ -178,7 +178,7 @@ public class MinimapGrid extends CoreWidget {
         }
 
         // draw arrowhead
-        Texture arrowhead = Assets.getTexture("Minimap:arrowhead").get();
+        Texture arrowhead = Assets.getTexture("MazesOfMenace:arrowhead").get();
         // Drawing textures with rotation is not yet supported, see #1926
         // We therefore use a workaround based on mesh drawing
         // The width of the screenArea is doubled to avoid clipping issues when the texture is rotated
