@@ -1,0 +1,21 @@
+{
+    "inherit": "default",
+    "elements": {
+        "MinimapGrid" : {
+            "background" : "engine:box",
+            "background-border" : {
+                "top" : 4,
+                "bottom" : 4,
+                "left" : 4,
+                "right" : 4
+            },
+            "margin" : {
+                "top" : 4,
+                "bottom" : 4,
+                "left" : 4,
+                "right" : 4
+            }
+        }
+    }
+
+}
