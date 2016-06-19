@@ -16,53 +16,33 @@
 package org.terasology.mazes.minimap.rendering.nui.layers;
 
 
-import java.util.Collection;
-import java.util.Optional;
 import java.util.function.IntFunction;
 
-import org.lwjgl.opengl.GL11;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terasology.asset.Assets;
-import org.terasology.assets.ResourceUrn;
+import org.terasology.utilities.Assets;
 import org.terasology.entitySystem.entity.EntityRef;
-import org.terasology.logic.characters.CharacterComponent;
 import org.terasology.logic.location.LocationComponent;
 import org.terasology.math.Border;
 import org.terasology.math.ChunkMath;
-import org.terasology.math.Region3i;
 import org.terasology.math.TeraMath;
 import org.terasology.math.geom.BaseVector2i;
 import org.terasology.math.geom.ImmutableVector2i;
 import org.terasology.math.geom.Quat4f;
 import org.terasology.math.geom.Rect2i;
-import org.terasology.math.geom.Vector2f;
 import org.terasology.math.geom.Vector2i;
 import org.terasology.math.geom.Vector3f;
 import org.terasology.math.geom.Vector3i;
 import org.terasology.rendering.assets.material.Material;
 import org.terasology.rendering.assets.mesh.Mesh;
-import org.terasology.rendering.assets.texture.BasicTextureRegion;
 import org.terasology.rendering.assets.texture.Texture;
-import org.terasology.rendering.assets.texture.TextureRegion;
 import org.terasology.rendering.nui.Canvas;
 import org.terasology.rendering.nui.Color;
 import org.terasology.rendering.nui.CoreWidget;
-import org.terasology.rendering.nui.ScaleMode;
-import org.terasology.rendering.nui.SubRegion;
 import org.terasology.rendering.nui.databinding.Binding;
 import org.terasology.rendering.nui.databinding.DefaultBinding;
 import org.terasology.rendering.nui.databinding.ReadOnlyBinding;
 import org.terasology.world.WorldProvider;
 import org.terasology.world.block.Block;
-import org.terasology.world.block.BlockAppearance;
-import org.terasology.world.block.BlockPart;
-import org.terasology.world.chunks.ChunkConstants;
-
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -70,50 +50,20 @@ import com.google.common.collect.Multimap;
  * @author mkienenb
  */
 public class MinimapGrid extends CoreWidget {
-    private static final Logger logger = LoggerFactory.getLogger(MinimapGrid.class);
-
     private static final ImmutableVector2i CELL_SIZE = new ImmutableVector2i(4, 4);
-    private static final ImmutableVector2i BUFFER_SIZE = new ImmutableVector2i(
-            CELL_SIZE.getX() * ChunkConstants.SIZE_X, CELL_SIZE.getY() * ChunkConstants.SIZE_Z);
-
-
     private Binding<EntityRef> targetEntityBinding = new DefaultBinding<>(EntityRef.NULL);
     private Binding<Integer> zoomFactorBinding = new DefaultBinding<>(0);
-
-    private Texture textureAtlas;
-    private TextureRegion questionMark;
 
     private Multimap<BaseVector2i, Vector3i> dirtyBlocks = LinkedHashMultimap.create();
 
     private WorldProvider worldProvider;
 
-    private LoadingCache<Block, TextureRegion> cache = CacheBuilder.newBuilder().build(new CacheLoader<Block, TextureRegion>() {
-
-        @Override
-        public TextureRegion load(Block block) {
-            BlockAppearance primaryAppearance = block.getPrimaryAppearance();
-
-            BlockPart blockPart = BlockPart.TOP;
-
-            // TODO: security issues
-            //                    WorldAtlas worldAtlas = CoreRegistry.get(WorldAtlas.class);
-            //                    float tileSize = worldAtlas.getRelativeTileSize();
-
-            float tileSize = 16f / 256f; // 256f could be replaced by textureAtlas.getWidth();
-
-            Vector2f textureAtlasPos = primaryAppearance.getTextureAtlasPos(blockPart);
-
-            TextureRegion textureRegion = new BasicTextureRegion(textureAtlas, textureAtlasPos, new Vector2f(tileSize, tileSize));
-            return textureRegion;
-        }
-
-    });
-
-    private IntFunction<Float> brightness;
+    @SuppressWarnings("unused")
+	private IntFunction<Float> brightness;
 
     public MinimapGrid() {
-        textureAtlas = Assets.getTexture("engine:terrain").get();
-        questionMark = Assets.getTextureRegion("engine:items#questionMark").get();
+        Assets.getTexture("engine:terrain").get();
+        Assets.getTextureRegion("engine:items#questionMark").get();
     }
 
     public void setHeightRange(int bottom, int top) {
@@ -145,14 +95,11 @@ public class MinimapGrid extends CoreWidget {
         // Get world position
         EntityRef entity = getTargetEntity();
         LocationComponent locationComponent = entity.getComponent(LocationComponent.class);
-        CharacterComponent character = entity.getComponent(CharacterComponent.class);
-        float rotation = (float) ((character != null) ? -character.yaw * Math.PI / 180f : 0);
+        float rotation = 0;
         Vector3f worldPosition = null;
-        if (null != locationComponent) {
-            worldPosition = locationComponent.getWorldPosition();
-        } else {
-            return;
-        }
+        Quat4f q = locationComponent.getWorldRotation();
+        rotation = -(float) Math.atan2(2.0 * (q.y * q.w + q.x * q.z), 1.0 - 2.0 * (q.y * q.y - q.z * q.z));
+        worldPosition = locationComponent.getWorldPosition();
 
         // define zoom factor
         int zoomLevel = -getZoomFactor();
@@ -194,7 +141,7 @@ public class MinimapGrid extends CoreWidget {
         material.setTexture("texture", arrowhead);
         Mesh mesh = Assets.getMesh("engine:UIBillboard").get();
         // The scaling seems to be completely wrong - 0.8f looks ok
-        canvas.drawMesh(mesh, material, screenArea, new Quat4f(0, 0, rotation), new Vector3f(), 0.8f);
+        canvas.drawMesh(mesh, material, screenArea, new Quat4f(0f, 0f, rotation), new Vector3f(), 0.8f);
     }
 
     @Override
@@ -236,17 +183,12 @@ public class MinimapGrid extends CoreWidget {
 
     private void drawCell(Canvas canvas, Rect2i rect, Vector3i pos) {
         Block block = worldProvider.getBlock(pos);
-        Block top = block;
         if (block.isTranslucent()) {
             canvas.drawFilledRectangle(rect,Color.GREY);
         } else {
             canvas.drawFilledRectangle(rect,Color.BLACK);
         }
 
-    }
-
-    private static boolean isIgnored(Block block) {
-        return block.isPenetrable() && !block.isWater();
     }
 
 }
